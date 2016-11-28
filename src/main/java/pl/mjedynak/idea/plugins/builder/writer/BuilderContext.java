@@ -16,10 +16,13 @@ public class BuilderContext {
     private final String methodPrefix;
     private final boolean isInner;
     private final boolean hasButMethod;
+    private final boolean hasFromMethod;
+    private final boolean hasBuilderMethodInSourceClass;
 
     public BuilderContext(Project project, PsiFieldsForBuilder psiFieldsForBuilder,
                           PsiDirectory targetDirectory, String className, PsiClass psiClassFromEditor,
-                          String methodPrefix, boolean isInner, boolean hasButMethod) {
+                          String methodPrefix, boolean isInner, boolean hasButMethod, boolean hasFromMethod,
+                          boolean hasBuilderMethodInSourceClass) {
         this.project = project;
         this.psiFieldsForBuilder = psiFieldsForBuilder;
         this.targetDirectory = targetDirectory;
@@ -28,6 +31,8 @@ public class BuilderContext {
         this.methodPrefix = methodPrefix;
         this.isInner = isInner;
         this.hasButMethod = hasButMethod;
+        this.hasFromMethod = hasFromMethod;
+        this.hasBuilderMethodInSourceClass = hasBuilderMethodInSourceClass;
     }
 
     public Project getProject() {
@@ -60,6 +65,14 @@ public class BuilderContext {
 
     boolean hasButMethod() {
         return hasButMethod;
+    }
+
+    boolean hasFromMethod() {
+        return hasFromMethod;
+    }
+
+    public boolean hasBuilderMethodInSourceClass() {
+        return hasBuilderMethodInSourceClass;
     }
 
     @Override

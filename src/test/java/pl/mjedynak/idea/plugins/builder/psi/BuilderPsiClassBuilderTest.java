@@ -77,7 +77,7 @@ public class BuilderPsiClassBuilderTest {
         given(psiFieldsForBuilder.getAllSelectedFields()).willReturn(allSelectedPsiFields);
         given(elementFactory.createClass(builderClassName)).willReturn(builderClass);
         given(builderClass.getModifierList()).willReturn(psiModifierList);
-        context = new BuilderContext(project, psiFieldsForBuilder, targetDirectory, builderClassName, srcClass, "anyPrefix", false, false);
+        context = new BuilderContext(project, psiFieldsForBuilder, targetDirectory, builderClassName, srcClass, "anyPrefix", false, false, false, false);
         mockCodeStyleManager();
     }
 
@@ -136,33 +136,33 @@ public class BuilderPsiClassBuilderTest {
     }
 
     @Test
-    public void shouldAddInitializingMethod() {
+    public void shouldAddInitializingMethodInBuilder() {
         // given
         PsiMethod method = mock(PsiMethod.class);
         given(elementFactory.createMethodFromText(
-                "public static " + builderClassName + " a" + srcClassName + "() { return new " + builderClassName + "();}", srcClass)).willReturn(method);
+                "public static " + builderClassName + " builder() { return new " + builderClassName + "();}", srcClass)).willReturn(method);
 
         // when
-        psiClassBuilder.aBuilder(context).withInitializingMethod();
+        psiClassBuilder.aBuilder(context).withInitializingMethod(false);
 
         // then
         verify(builderClass).add(method);
     }
 
     @Test
-    public void shouldAddInitializingMethodStartingWithAnIfSourceClassNameStartsWithVowel() {
+    public void shouldAddInitializingMethodinSourceClass() {
         // given
         PsiMethod method = mock(PsiMethod.class);
         String srcClassNameStartingWithVowel = "Inventory";
         given(srcClass.getName()).willReturn(srcClassNameStartingWithVowel);
         given(elementFactory.createMethodFromText(
-                "public static " + builderClassName + " an" + srcClassNameStartingWithVowel + "() { return new " + builderClassName + "();}", srcClass)).willReturn(method);
+                "public static " + builderClassName + " builder() { return new " + builderClassName + "();}", srcClass)).willReturn(method);
 
         // when
-        psiClassBuilder.aBuilder(context).withInitializingMethod();
+        psiClassBuilder.aBuilder(context).withInitializingMethod(true);
 
         // then
-        verify(builderClass).add(method);
+        verify(srcClass).add(method);
     }
 
     @Test

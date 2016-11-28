@@ -100,7 +100,7 @@ public class BuilderWriterComputableTest {
     private void mockBuilder() {
         given(builderPsiClassBuilder.withFields()).willReturn(builderPsiClassBuilder);
         given(builderPsiClassBuilder.withPrivateConstructor()).willReturn(builderPsiClassBuilder);
-        given(builderPsiClassBuilder.withInitializingMethod()).willReturn(builderPsiClassBuilder);
+        given(builderPsiClassBuilder.withInitializingMethod(false)).willReturn(builderPsiClassBuilder);
         given(builderPsiClassBuilder.withSetMethods(methodPrefix)).willReturn(builderPsiClassBuilder);
         given(builderPsiClassBuilder.build()).willReturn(builderClass);
         given(builderClass.getContainingFile()).willReturn(psiFile);

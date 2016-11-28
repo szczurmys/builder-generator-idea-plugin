@@ -14,17 +14,12 @@ import pl.mjedynak.idea.plugins.builder.writer.BuilderContext;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-
-import static com.intellij.openapi.util.text.StringUtil.isVowel;
 
 public class BuilderPsiClassBuilder {
 
     private static final String PRIVATE_STRING = "private";
     private static final String SPACE = " ";
-    private static final String A_PREFIX = " a";
-    private static final String AN_PREFIX = " an";
     private static final String SEMICOLON = ",";
     static final String STATIC_MODIFIER = "static";
     static final String FINAL_MODIFIER = "final";
@@ -33,6 +28,7 @@ public class BuilderPsiClassBuilder {
     private PsiFieldsModifier psiFieldsModifier = new PsiFieldsModifier();
     private CodeStyleSettings codeStyleSettings = new CodeStyleSettings();
     private ButMethodCreator butMethodCreator;
+    private FromMethodCreator fromMethodCreator;
     private MethodCreator methodCreator;
 
     private PsiClass srcClass = null;
@@ -77,6 +73,7 @@ public class BuilderPsiClassBuilder {
         allSelectedPsiFields = context.getPsiFieldsForBuilder().getAllSelectedFields();
         methodCreator = new MethodCreator(elementFactory, builderClassName);
         butMethodCreator = new ButMethodCreator(elementFactory);
+        fromMethodCreator = new FromMethodCreator(elementFactory);
     }
 
     public BuilderPsiClassBuilder withFields() {
@@ -95,11 +92,14 @@ public class BuilderPsiClassBuilder {
         return this;
     }
 
-    public BuilderPsiClassBuilder withInitializingMethod() {
-        String prefix = isVowel(srcClassName.toLowerCase(Locale.ENGLISH).charAt(0)) ? AN_PREFIX : A_PREFIX;
+    public BuilderPsiClassBuilder withInitializingMethod(boolean inSrcClass) {
         PsiMethod staticMethod = elementFactory.createMethodFromText(
-                "public static " + builderClassName + prefix + srcClassName + "() { return new " + builderClassName + "();}", srcClass);
-        builderClass.add(staticMethod);
+                "public static " + builderClassName + " builder() { return new " + builderClassName + "();}", srcClass);
+        if(inSrcClass) {
+            srcClass.add(staticMethod);
+        } else {
+            builderClass.add(staticMethod);
+        }
         return this;
     }
 
@@ -125,6 +125,12 @@ public class BuilderPsiClassBuilder {
 
     public BuilderPsiClassBuilder withButMethod() {
         PsiMethod method = butMethodCreator.butMethod(builderClassName, builderClass, srcClass);
+        builderClass.add(method);
+        return this;
+    }
+
+    public BuilderPsiClassBuilder withFromMethod(boolean innerBuilder) {
+        PsiMethod method = fromMethodCreator.fromMethod(builderClassName, allSelectedPsiFields, srcClass, innerBuilder);
         builderClass.add(method);
         return this;
     }

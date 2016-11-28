@@ -50,9 +50,10 @@ class BuilderWriterComputable implements Computable<PsiElement> {
         BuilderPsiClassBuilder builder = builderPsiClassBuilder.anInnerBuilder(context)
                 .withFields()
                 .withPrivateConstructor()
-                .withInitializingMethod()
+                .withInitializingMethod(context.hasBuilderMethodInSourceClass())
                 .withSetMethods(context.getMethodPrefix());
         addButMethodIfNecessary(context, builder);
+        addFromMethodIfNecessary(context, builder);
         return builder.build();
     }
 
@@ -60,15 +61,22 @@ class BuilderWriterComputable implements Computable<PsiElement> {
         BuilderPsiClassBuilder builder = builderPsiClassBuilder.aBuilder(context)
                 .withFields()
                 .withPrivateConstructor()
-                .withInitializingMethod()
+                .withInitializingMethod(context.hasBuilderMethodInSourceClass())
                 .withSetMethods(context.getMethodPrefix());
         addButMethodIfNecessary(context, builder);
+        addFromMethodIfNecessary(context, builder);
         return builder.build();
     }
 
     private void addButMethodIfNecessary(BuilderContext context, BuilderPsiClassBuilder builder) {
         if (context.hasButMethod()) {
             builder.withButMethod();
+        }
+    }
+
+    private void addFromMethodIfNecessary(BuilderContext context, BuilderPsiClassBuilder builder) {
+        if (context.hasFromMethod()) {
+            builder.withFromMethod(context.isInner());
         }
     }
 
