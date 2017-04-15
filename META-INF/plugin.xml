@@ -109,5 +109,6 @@
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="pl.mjedynak.idea.plugins.builder.config.DialogConfig" serviceInterface="pl.mjedynak.idea.plugins.builder.config.DialogConfig"/>
     </extensions>
 </idea-plugin>

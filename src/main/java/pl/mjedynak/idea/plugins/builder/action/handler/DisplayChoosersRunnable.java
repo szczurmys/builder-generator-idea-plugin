@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
+import pl.mjedynak.idea.plugins.builder.config.DialogConfig;
 import pl.mjedynak.idea.plugins.builder.factory.CreateBuilderDialogFactory;
 import pl.mjedynak.idea.plugins.builder.factory.MemberChooserDialogFactory;
 import pl.mjedynak.idea.plugins.builder.factory.PsiFieldsForBuilderFactory;
@@ -44,7 +45,9 @@ public class DisplayChoosersRunnable implements Runnable {
 
     @Override
     public void run() {
-        CreateBuilderDialog createBuilderDialog = showDialog();
+        PsiDirectory srcDir = psiHelper.getPsiFileFromEditor(editor, project).getContainingDirectory();
+        PsiPackage srcPackage = psiHelper.getPackage(srcDir);
+        CreateBuilderDialog createBuilderDialog = showDialog(srcPackage);
         if (createBuilderDialog.isOK()) {
             PsiDirectory targetDirectory = createBuilderDialog.getTargetDirectory();
             String className = createBuilderDialog.getClassName();
@@ -53,26 +56,64 @@ public class DisplayChoosersRunnable implements Runnable {
             List<PsiElementClassMember> fieldsToDisplay = getFieldsToIncludeInBuilder(psiClassFromEditor, innerBuilder);
             MemberChooser<PsiElementClassMember> memberChooserDialog = memberChooserDialogFactory.getMemberChooserDialog(fieldsToDisplay, project);
             memberChooserDialog.show();
-            writeBuilderIfNecessary(targetDirectory, className, methodPrefix, memberChooserDialog, createBuilderDialog);
+            writeBuilderIfNecessary(targetDirectory, className,
+                    methodPrefix, memberChooserDialog,
+                    createBuilderDialog, srcPackage);
         }
     }
 
-    private void writeBuilderIfNecessary(
-            PsiDirectory targetDirectory, String className, String methodPrefix, MemberChooser<PsiElementClassMember> memberChooserDialog, CreateBuilderDialog createBuilderDialog) {
+    private void writeBuilderIfNecessary(PsiDirectory targetDirectory,
+                                         String className,
+                                         String methodPrefix,
+                                         MemberChooser<PsiElementClassMember> memberChooserDialog,
+                                         CreateBuilderDialog createBuilderDialog,
+                                         PsiPackage srcPackage) {
         if (memberChooserDialog.isOK()) {
             List<PsiElementClassMember> selectedElements = memberChooserDialog.getSelectedElements();
             PsiFieldsForBuilder psiFieldsForBuilder = psiFieldsForBuilderFactory.createPsiFieldsForBuilder(selectedElements, psiClassFromEditor);
             BuilderContext context = new BuilderContext(
                     project, psiFieldsForBuilder, targetDirectory, className, psiClassFromEditor, methodPrefix,
                     createBuilderDialog.isInnerBuilder(), createBuilderDialog.hasButMethod(),
-                    createBuilderDialog.hasFromMethod(), createBuilderDialog.hasBuilderMethodInSourceClass());
+                    createBuilderDialog.hasFromMethod(), createBuilderDialog.hasBuilderMethodInSourceClass(),
+                    createBuilderDialog.isCreatePrivateConstructor(), createBuilderDialog.isCreateGetter(),
+                    createBuilderDialog.isCreateToBuilder());
+            saveConfig(context, srcPackage);
             builderWriter.writeBuilder(context);
         }
     }
 
-    private CreateBuilderDialog showDialog() {
-        PsiDirectory srcDir = psiHelper.getPsiFileFromEditor(editor, project).getContainingDirectory();
-        PsiPackage srcPackage = psiHelper.getPackage(srcDir);
+    private void saveConfig(BuilderContext builderContext, PsiPackage srcPackage) {
+        DialogConfig dialogConfig = createBuilderDialogFactory.getDialogConfig();
+
+        dialogConfig.setButMethod(builderContext.hasButMethod());
+        dialogConfig.setInnerBuilder(builderContext.isInner());
+        dialogConfig.setFromMethod(builderContext.hasFromMethod());
+        dialogConfig.setBuilderMethodInSourceClass(builderContext.hasBuilderMethodInSourceClass());
+
+        dialogConfig.setCreatePrivateConstructor(builderContext.isCreatePrivateConstructor());
+        dialogConfig.setCreateGetter(builderContext.isCreateGetter());
+        dialogConfig.setCreateToBuilder(builderContext.isCreateToBuilder());
+
+        dialogConfig.setSimpleBuilderName("Builder".equals(builderContext.getClassName()));
+
+        if(!builderContext.isInner()) {
+            PsiDirectory builderTargetDirectory = builderContext.getTargetDirectory();
+            PsiPackage builderPackage = builderTargetDirectory == null ? null : psiHelper.getPackage(builderTargetDirectory);
+            String builderPackageName = builderPackage == null ? "" : builderPackage.getQualifiedName();
+            String sourcePackageName = srcPackage == null ? "" : srcPackage.getQualifiedName();
+            if (builderPackageName != null
+                    && !builderPackageName.isEmpty()
+                    && builderPackageName.startsWith(sourcePackageName)) {
+                String suffix = builderPackageName.substring(sourcePackageName.length(), builderPackageName.length());
+                if (!suffix.equals(".")) {
+                    dialogConfig.setTargetPackageSuffix(suffix);
+                }
+            }
+        }
+    }
+
+    private CreateBuilderDialog showDialog(PsiPackage srcPackage) {
+
         CreateBuilderDialog dialog = createBuilderDialogFactory.createBuilderDialog(psiClassFromEditor, project, srcPackage);
         dialog.show();
         return dialog;

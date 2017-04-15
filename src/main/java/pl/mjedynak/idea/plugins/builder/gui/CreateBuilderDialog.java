@@ -16,6 +16,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import pl.mjedynak.idea.plugins.builder.config.DialogConfig;
 import pl.mjedynak.idea.plugins.builder.factory.ReferenceEditorComboWithBrowseButtonFactory;
 import pl.mjedynak.idea.plugins.builder.factory.PackageChooserDialogFactory;
 import pl.mjedynak.idea.plugins.builder.gui.helper.GuiHelper;
@@ -46,6 +47,7 @@ public class CreateBuilderDialog extends DialogWrapper {
     private static final int WIDTH = 40;
 
     private final String targetClassName;
+    private final DialogConfig dialogConfig;
 
     private PsiHelper psiHelper;
     private GuiHelper guiHelper;
@@ -59,6 +61,11 @@ public class CreateBuilderDialog extends DialogWrapper {
     private JCheckBox butMethod;
     private JCheckBox fromMethod;
     private JCheckBox builderMethodInSourceClass;
+
+    private JCheckBox createPrivateConstructorInSourceClass;
+    private JCheckBox createGetterInSourceClass;
+    private JCheckBox createToBuilderInSourceClass;
+
     private ReferenceEditorComboWithBrowseButton targetPackageField;
 
     public CreateBuilderDialog(Project project,
@@ -69,8 +76,10 @@ public class CreateBuilderDialog extends DialogWrapper {
                                PsiPackage targetPackage,
                                PsiHelper psiHelper,
                                GuiHelper guiHelper,
-                               ReferenceEditorComboWithBrowseButtonFactory referenceEditorComboWithBrowseButtonFactory) {
+                               ReferenceEditorComboWithBrowseButtonFactory referenceEditorComboWithBrowseButtonFactory,
+                               DialogConfig dialogConfig) {
         super(project, true);
+        this.dialogConfig = dialogConfig;
         this.psiHelper = psiHelper;
         this.guiHelper = guiHelper;
         this.project = project;
@@ -81,8 +90,13 @@ public class CreateBuilderDialog extends DialogWrapper {
         setPreferredSize(targetClassNameField);
         setPreferredSize(targetMethodPrefix);
 
-        String targetPackageName = (targetPackage != null) ? targetPackage.getQualifiedName() : "";
-        targetPackageField = referenceEditorComboWithBrowseButtonFactory.getReferenceEditorComboWithBrowseButton(project, targetPackageName, RECENTS_KEY);
+        String suffixPackage = dialogConfig.getTargetPackageSuffix() == null
+                ? ""
+                : dialogConfig.getTargetPackageSuffix();
+
+        String sourceTargetPackage = ((targetPackage != null) ? targetPackage.getQualifiedName() : "")
+                + suffixPackage;
+        targetPackageField = referenceEditorComboWithBrowseButtonFactory.getReferenceEditorComboWithBrowseButton(project, sourceTargetPackage, RECENTS_KEY);
         targetPackageField.addActionListener(new ChooserDisplayerActionListener(targetPackageField, new PackageChooserDialogFactory(), project));
         setTitle(title);
     }
@@ -193,12 +207,10 @@ public class CreateBuilderDialog extends DialogWrapper {
         innerBuilder.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                targetPackageField.setEnabled(!innerBuilder.isSelected());
-                simpleBuilderName.setEnabled(innerBuilder.isSelected());
-                builderMethodInSourceClass.setEnabled(innerBuilder.isSelected());
-                changeBuilderName();
+                innerBuilderAction();
             }
         });
+        innerBuilder.setSelected(dialogConfig.getInnerBuilder());
         targetPackageField.setEnabled(!innerBuilder.isSelected());
         panel.add(innerBuilder, gbConstraints);
         // Inner builder
@@ -222,10 +234,11 @@ public class CreateBuilderDialog extends DialogWrapper {
         simpleBuilderName.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                changeBuilderName();
+                simpleBuilderAction();
             }
         });
         simpleBuilderName.setEnabled(innerBuilder.isSelected());
+        simpleBuilderName.setSelected(dialogConfig.getSimpleBuilderName());
         panel.add(simpleBuilderName, gbConstraints);
         // simple builder name
 
@@ -245,6 +258,7 @@ public class CreateBuilderDialog extends DialogWrapper {
         gbConstraints.fill = GridBagConstraints.HORIZONTAL;
         gbConstraints.anchor = GridBagConstraints.WEST;
         builderMethodInSourceClass = new JCheckBox();
+        builderMethodInSourceClass.setSelected(dialogConfig.getBuilderMethodInSourceClass());
         builderMethodInSourceClass.setEnabled(innerBuilder.isSelected());
         panel.add(builderMethodInSourceClass, gbConstraints);
         // builder method in source class
@@ -265,6 +279,7 @@ public class CreateBuilderDialog extends DialogWrapper {
         gbConstraints.fill = GridBagConstraints.HORIZONTAL;
         gbConstraints.anchor = GridBagConstraints.WEST;
         butMethod = new JCheckBox();
+        butMethod.setSelected(dialogConfig.getButMethod());
         panel.add(butMethod, gbConstraints);
         // but method
 
@@ -285,10 +300,88 @@ public class CreateBuilderDialog extends DialogWrapper {
         gbConstraints.fill = GridBagConstraints.HORIZONTAL;
         gbConstraints.anchor = GridBagConstraints.WEST;
         fromMethod = new JCheckBox();
+        fromMethod.setSelected(dialogConfig.getFromMethod());
         panel.add(fromMethod, gbConstraints);
         // from method
 
+
+        // create private constructor
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 0;
+        gbConstraints.weightx = 0;
+        gbConstraints.gridy = 10;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        panel.add(new JLabel("Create private constructor"), gbConstraints);
+
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 1;
+        gbConstraints.weightx = 1;
+        gbConstraints.gridwidth = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        createPrivateConstructorInSourceClass = new JCheckBox();
+        createPrivateConstructorInSourceClass.setSelected(dialogConfig.getCreatePrivateConstructor());
+        panel.add(createPrivateConstructorInSourceClass, gbConstraints);
+        // create private constructor
+
+
+        // create getter in source class
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 0;
+        gbConstraints.weightx = 0;
+        gbConstraints.gridy = 11;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        panel.add(new JLabel("Create getter"), gbConstraints);
+
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 1;
+        gbConstraints.weightx = 1;
+        gbConstraints.gridwidth = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        createGetterInSourceClass = new JCheckBox();
+        createGetterInSourceClass.setSelected(dialogConfig.getCreateGetter());
+        panel.add(createGetterInSourceClass, gbConstraints);
+        // create getter in source class
+
+
+        // create toBuilder in source class
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 0;
+        gbConstraints.weightx = 0;
+        gbConstraints.gridy = 12;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        panel.add(new JLabel("Create toBuilder"), gbConstraints);
+
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 1;
+        gbConstraints.weightx = 1;
+        gbConstraints.gridwidth = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        createToBuilderInSourceClass = new JCheckBox();
+        createToBuilderInSourceClass.setSelected(dialogConfig.getCreateToBuilder());
+        panel.add(createToBuilderInSourceClass, gbConstraints);
+        // create toBuilder in source class
+
+        innerBuilderAction();
+        simpleBuilderAction();
+
         return panel;
+    }
+
+    private void innerBuilderAction() {
+        targetPackageField.setEnabled(!innerBuilder.isSelected());
+        simpleBuilderName.setEnabled(innerBuilder.isSelected());
+        builderMethodInSourceClass.setEnabled(innerBuilder.isSelected());
+        changeBuilderName();
+    }
+
+    private void simpleBuilderAction(){
+        changeBuilderName();
     }
 
     private void changeBuilderName() {
@@ -366,6 +459,18 @@ public class CreateBuilderDialog extends DialogWrapper {
 
     public boolean hasBuilderMethodInSourceClass() {
         return innerBuilder.isSelected() && builderMethodInSourceClass.isSelected();
+    }
+
+    public boolean isCreatePrivateConstructor() {
+        return createPrivateConstructorInSourceClass.isSelected();
+    }
+
+    public boolean isCreateGetter() {
+        return createGetterInSourceClass.isSelected();
+    }
+
+    public boolean isCreateToBuilder() {
+        return createToBuilderInSourceClass.isSelected();
     }
 
     public PsiDirectory getTargetDirectory() {

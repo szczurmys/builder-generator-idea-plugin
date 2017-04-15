@@ -17,7 +17,7 @@ public class ButMethodCreator {
 
     public PsiMethod butMethod(String builderClassName, PsiClass builderClass, PsiClass srcClass) {
         PsiMethod[] methods = builderClass.getMethods();
-        StringBuilder text = new StringBuilder("public " + builderClassName + " but() { return ");
+        StringBuilder text = new StringBuilder("public " + builderClassName + " but() { return builder().");
         for (PsiMethod method : methods) {
             PsiParameterList parameterList = method.getParameterList();
             if (methodIsNotConstructor(builderClassName, method)) {

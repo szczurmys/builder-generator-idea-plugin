@@ -103,6 +103,21 @@ public class BuilderPsiClassBuilder {
         return this;
     }
 
+    public BuilderPsiClassBuilder withToBuilderMethod(boolean initializerIsInSrcClass) {
+
+        String initializerBaseClass = "";
+        if(!initializerIsInSrcClass) {
+            initializerBaseClass = builderClassName + ".";
+        }
+
+        PsiMethod toBuilderMethod = elementFactory.createMethodFromText(
+        "public " + builderClassName + " toBuilder() { return " + initializerBaseClass + "builder().from(this);}", srcClass);
+
+        srcClass.add(toBuilderMethod);
+
+        return this;
+    }
+
     public BuilderPsiClassBuilder withSetMethods(String methodPrefix) {
         if (isInnerBuilder(builderClass)) {
             for (PsiField psiFieldForAssignment : allSelectedPsiFields) {
@@ -134,6 +149,60 @@ public class BuilderPsiClassBuilder {
         builderClass.add(method);
         return this;
     }
+
+    public BuilderPsiClassBuilder withPrivateConstructorInSourceClass() {
+        PsiMethod[] constructors = srcClass.getConstructors();
+        for(PsiMethod method : constructors) {
+            if(method.getParameterList().getParametersCount() == 0) {
+                return this;
+            }
+        }
+        PsiMethod constructor = elementFactory.createConstructor();
+        constructor.getModifierList().setModifierProperty(PRIVATE_STRING, true);
+        srcClass.add(constructor);
+        return this;
+    }
+
+    public BuilderPsiClassBuilder withGetterInSourceClass() {
+        String methodFormat = "public %s %s() { return %s; }";
+        for(PsiField psiField : allSelectedPsiFields) {
+            String type = psiField.getType().getCanonicalText();
+            String fieldName = psiField.getName();
+            String methodName = getGetterName(type, fieldName);
+            if(!containsGetter(methodName)) {
+                String method = String.format(methodFormat, type, methodName, fieldName);
+                PsiMethod psiMethod = elementFactory.createMethodFromText(method, srcClass);
+                srcClass.add(psiMethod);
+            }
+        }
+        return this;
+    }
+    private boolean containsGetter(String methodName) {
+        PsiMethod[] methodsByName = srcClass.findMethodsByName(methodName, true);
+        for(PsiMethod  method : methodsByName) {
+            if(method.getParameterList().getParametersCount() == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String getGetterName(String type, String fieldName) {
+        String prefix = "get";
+        if(type.equals(boolean.class.getCanonicalName())) {
+            prefix = "is";
+        }
+        return prefix + upperFirstLetter(fieldName);
+    }
+
+    private String upperFirstLetter(String name) {
+        if(name.length() <= 1) {
+            return name.toUpperCase();
+        }
+        return name.substring(0, 1).toUpperCase()
+                + name.substring(1, name.length());
+    }
+
 
     private void createAndAddMethod(PsiField psiField, String methodPrefix) {
         builderClass.add(methodCreator.createMethod(psiField, methodPrefix));

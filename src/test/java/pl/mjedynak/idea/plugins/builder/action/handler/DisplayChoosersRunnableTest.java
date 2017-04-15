@@ -16,6 +16,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import pl.mjedynak.idea.plugins.builder.config.DialogConfig;
 import pl.mjedynak.idea.plugins.builder.factory.CreateBuilderDialogFactory;
 import pl.mjedynak.idea.plugins.builder.factory.MemberChooserDialogFactory;
 import pl.mjedynak.idea.plugins.builder.factory.PsiFieldsForBuilderFactory;
@@ -60,6 +61,7 @@ public class DisplayChoosersRunnableTest {
     @Mock private MemberChooser memberChooserDialog;
     @Mock private PsiFieldsForBuilderFactory psiFieldsForBuilderFactory;
     @Mock private PsiFieldsForBuilder psiFieldsForBuilder;
+    @Mock private DialogConfig dialogConfig;
 
     private String className = "className";
     private PsiField[] allFields = {};
@@ -77,6 +79,7 @@ public class DisplayChoosersRunnableTest {
         given(psiClassFromEditor.getName()).willReturn(className);
         given(psiFieldsForBuilderFactory.createPsiFieldsForBuilder(selectedFields, psiClassFromEditor)).willReturn(psiFieldsForBuilder);
         given(createBuilderDialogFactory.createBuilderDialog(psiClassFromEditor, project, psiPackage)).willReturn(createBuilderDialog);
+        given(createBuilderDialogFactory.getDialogConfig()).willReturn(dialogConfig);
     }
 
     @Test
@@ -121,9 +124,15 @@ public class DisplayChoosersRunnableTest {
         boolean hasButMethod = true;
         boolean hasFromMethod = true;
         boolean hasBuilderMethodInSourceClass = false;
+        boolean createPrivateConstructor = true;
+        boolean createGetter = true;
+        boolean createToBuilder = true;
         given(createBuilderDialog.isInnerBuilder()).willReturn(isInner);
         given(createBuilderDialog.hasButMethod()).willReturn(hasButMethod);
         given(createBuilderDialog.hasFromMethod()).willReturn(hasFromMethod);
+        given(createBuilderDialog.isCreatePrivateConstructor()).willReturn(createPrivateConstructor);
+        given(createBuilderDialog.isCreateGetter()).willReturn(createGetter);
+        given(createBuilderDialog.isCreateToBuilder()).willReturn(createToBuilder);
         given(createBuilderDialog.isOK()).willReturn(true);
         given(memberChooserDialog.isOK()).willReturn(true);
         given(createBuilderDialog.getTargetDirectory()).willReturn(psiDirectory);
@@ -142,6 +151,8 @@ public class DisplayChoosersRunnableTest {
         verify(memberChooserDialog).isOK();
         verify(createBuilderDialog).show();
         verify(memberChooserDialog).show();
-        verify(builderWriter).writeBuilder(eq(new BuilderContext(project, psiFieldsForBuilder, psiDirectory, className, psiClassFromEditor, methodPrefix, isInner, hasButMethod, hasFromMethod, hasBuilderMethodInSourceClass)));
+        verify(builderWriter).writeBuilder(eq(new BuilderContext(project, psiFieldsForBuilder, psiDirectory,
+                className, psiClassFromEditor, methodPrefix, isInner, hasButMethod, hasFromMethod,
+                hasBuilderMethodInSourceClass, createPrivateConstructor, createGetter, createToBuilder)));
     }
 }

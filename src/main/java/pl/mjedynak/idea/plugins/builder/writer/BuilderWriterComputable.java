@@ -54,6 +54,9 @@ class BuilderWriterComputable implements Computable<PsiElement> {
                 .withSetMethods(context.getMethodPrefix());
         addButMethodIfNecessary(context, builder);
         addFromMethodIfNecessary(context, builder);
+        addPrivateConstructorInSourceClassIfNecessary(context, builder);
+        addGetterInSourceClassIfNecessary(context, builder);
+        addToBuilderInSourceClassIfNecessary(context, builder);
         return builder.build();
     }
 
@@ -65,6 +68,9 @@ class BuilderWriterComputable implements Computable<PsiElement> {
                 .withSetMethods(context.getMethodPrefix());
         addButMethodIfNecessary(context, builder);
         addFromMethodIfNecessary(context, builder);
+        addPrivateConstructorInSourceClassIfNecessary(context, builder);
+        addGetterInSourceClassIfNecessary(context, builder);
+        addToBuilderInSourceClassIfNecessary(context, builder);
         return builder.build();
     }
 
@@ -77,6 +83,24 @@ class BuilderWriterComputable implements Computable<PsiElement> {
     private void addFromMethodIfNecessary(BuilderContext context, BuilderPsiClassBuilder builder) {
         if (context.hasFromMethod()) {
             builder.withFromMethod(context.isInner());
+        }
+    }
+
+    private void addPrivateConstructorInSourceClassIfNecessary(BuilderContext context, BuilderPsiClassBuilder builder) {
+        if (context.isCreatePrivateConstructor()) {
+            builder.withPrivateConstructorInSourceClass();
+        }
+    }
+
+    private void addGetterInSourceClassIfNecessary(BuilderContext context, BuilderPsiClassBuilder builder) {
+        if (context.isCreateGetter()) {
+            builder.withGetterInSourceClass();
+        }
+    }
+
+    private void addToBuilderInSourceClassIfNecessary(BuilderContext context, BuilderPsiClassBuilder builder) {
+        if (context.isCreateToBuilder()) {
+            builder.withToBuilderMethod(context.hasBuilderMethodInSourceClass());
         }
     }
 

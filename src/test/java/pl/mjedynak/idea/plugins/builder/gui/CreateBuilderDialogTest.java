@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import pl.mjedynak.idea.plugins.builder.config.DialogConfig;
 import pl.mjedynak.idea.plugins.builder.factory.ReferenceEditorComboWithBrowseButtonFactory;
 import pl.mjedynak.idea.plugins.builder.gui.helper.GuiHelper;
 import pl.mjedynak.idea.plugins.builder.psi.PsiHelper;
@@ -43,6 +44,7 @@ public class CreateBuilderDialogTest {
     @Mock private PsiClass sourceClass;
     @Mock private ReferenceEditorComboWithBrowseButtonFactory referenceEditorComboWithBrowseButtonFactory;
     @Mock private ReferenceEditorComboWithBrowseButton referenceEditorComboWithBrowseButton;
+    @Mock private DialogConfig dialogConfig;
 
     private String className;
 
@@ -57,7 +59,7 @@ public class CreateBuilderDialogTest {
                 project, packageName, CreateBuilderDialog.RECENTS_KEY)).willReturn(referenceEditorComboWithBrowseButton);
 
         createBuilderDialog = new CreateBuilderDialog(
-                project, title, sourceClass, className, methodPrefix, targetPackage, psiHelper, guiHelper, referenceEditorComboWithBrowseButtonFactory);
+                project, title, sourceClass, className, methodPrefix, targetPackage, psiHelper, guiHelper, referenceEditorComboWithBrowseButtonFactory, dialogConfig);
     }
 
 
