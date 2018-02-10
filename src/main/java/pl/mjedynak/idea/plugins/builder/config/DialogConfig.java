@@ -42,6 +42,9 @@ public class DialogConfig  implements PersistentStateComponent<DialogConfig> {
     @Tag("CreateToBuilder")
     private Boolean createToBuilder;
 
+    @Tag("UseSingleField")
+    private Boolean useSingleField;
+
     public static DialogConfig getInstance() {
         return ServiceManager.getService(DialogConfig.class);
     }
@@ -119,6 +122,14 @@ public class DialogConfig  implements PersistentStateComponent<DialogConfig> {
 
     public void setCreateToBuilder(Boolean createToBuilder) {
         this.createToBuilder = createToBuilder;
+    }
+
+    public Boolean getUseSingleField() {
+        return getValueOrFalse(createToBuilder);
+    }
+
+    public void setUseSingleField(Boolean useSingleField) {
+        this.useSingleField = useSingleField;
     }
 
     @Nullable

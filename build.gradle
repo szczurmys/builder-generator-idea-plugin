@@ -4,9 +4,9 @@ apply from: 'idea.gradle'
 apply plugin: 'checkstyle'
 
 // --- properties ---
-ext.ideaInstallationPath = 'C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition 2016.3'
-ext.ideaJdk = 'IntelliJ IDEA Community Edition IC-163.7743.44'
-sourceCompatibility = 1.6
+ext.ideaInstallationPath = 'C:/Program Files/JetBrains/IntelliJ IDEA Community Edition 2017.3.2'
+ext.ideaJdk = 'IntelliJ IDEA Community Edition IC-173.4127.27'
+sourceCompatibility = 1.8
 // --- properties ---
 
 // workaround for http://issues.gradle.org/browse/GRADLE-2538

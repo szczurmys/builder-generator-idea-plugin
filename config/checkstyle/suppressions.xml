@@ -5,8 +5,8 @@
         "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
-    <suppress checks="MagicNumberCheck"
-              files="CreateBuilderDialog.java"/>
-    <suppress checks="MethodLength"
-              files="CreateBuilderDialog.java"/>
+    <suppress checks=".*" files="MemberChooser.java"/>
+    <suppress checks="MagicNumberCheck" files="CreateBuilderDialog.java"/>
+    <suppress checks="MagicNumberCheck" files=".*Test.java"/>
+    <suppress checks="MethodLength" files="CreateBuilderDialog.java"/>
 </suppressions>

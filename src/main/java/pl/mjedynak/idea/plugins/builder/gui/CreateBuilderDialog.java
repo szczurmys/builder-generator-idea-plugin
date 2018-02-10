@@ -1,5 +1,6 @@
 package pl.mjedynak.idea.plugins.builder.gui;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,17 +9,22 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import pl.mjedynak.idea.plugins.builder.config.DialogConfig;
 import pl.mjedynak.idea.plugins.builder.factory.ReferenceEditorComboWithBrowseButtonFactory;
 import pl.mjedynak.idea.plugins.builder.factory.PackageChooserDialogFactory;
+import pl.mjedynak.idea.plugins.builder.factory.ReferenceEditorComboWithBrowseButtonFactory;
 import pl.mjedynak.idea.plugins.builder.gui.helper.GuiHelper;
 import pl.mjedynak.idea.plugins.builder.psi.PsiHelper;
 
@@ -66,7 +72,9 @@ public class CreateBuilderDialog extends DialogWrapper {
     private JCheckBox createGetterInSourceClass;
     private JCheckBox createToBuilderInSourceClass;
 
+    private JCheckBox useSingleField;
     private ReferenceEditorComboWithBrowseButton targetPackageField;
+    private PsiClass existingBuilder;
 
     public CreateBuilderDialog(Project project,
                                String title,
@@ -77,6 +85,7 @@ public class CreateBuilderDialog extends DialogWrapper {
                                PsiHelper psiHelper,
                                GuiHelper guiHelper,
                                ReferenceEditorComboWithBrowseButtonFactory referenceEditorComboWithBrowseButtonFactory,
+                               PsiClass existingBuilder,
                                DialogConfig dialogConfig) {
         super(project, true);
         this.dialogConfig = dialogConfig;
@@ -84,6 +93,7 @@ public class CreateBuilderDialog extends DialogWrapper {
         this.guiHelper = guiHelper;
         this.project = project;
         this.sourceClass = sourceClass;
+        this.existingBuilder = existingBuilder;
         this.targetClassName = targetClassName;
         targetClassNameField = new JTextField(targetClassName);
         targetMethodPrefix = new JTextField(methodPrefix);
@@ -114,10 +124,13 @@ public class CreateBuilderDialog extends DialogWrapper {
         field.setPreferredSize(size);
     }
 
+    @NotNull
+    @Override
     protected Action[] createActions() {
         return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
     }
 
+    @Override
     protected JComponent createCenterPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -141,6 +154,7 @@ public class CreateBuilderDialog extends DialogWrapper {
         gbConstraints.anchor = GridBagConstraints.WEST;
         panel.add(targetClassNameField, gbConstraints);
         targetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
             protected void textChanged(DocumentEvent e) {
                 getOKAction().setEnabled(JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(getClassName()));
             }
@@ -177,6 +191,7 @@ public class CreateBuilderDialog extends DialogWrapper {
         gbConstraints.weightx = 1;
 
         AnAction clickAction = new AnAction() {
+            @Override
             public void actionPerformed(AnActionEvent e) {
                 targetPackageField.getButton().doClick();
             }
@@ -367,6 +382,26 @@ public class CreateBuilderDialog extends DialogWrapper {
         panel.add(createToBuilderInSourceClass, gbConstraints);
         // create toBuilder in source class
 
+        // useSingleField
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 0;
+        gbConstraints.weightx = 0;
+        gbConstraints.gridy = 13;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        panel.add(new JLabel("Use single field"), gbConstraints);
+
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridx = 1;
+        gbConstraints.weightx = 1;
+        gbConstraints.gridwidth = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        useSingleField = new JCheckBox();
+        useSingleField.setSelected(dialogConfig.getUseSingleField());
+        panel.add(useSingleField, gbConstraints);
+        // useSingleField
+
         innerBuilderAction();
         simpleBuilderAction();
 
@@ -403,17 +438,42 @@ public class CreateBuilderDialog extends DialogWrapper {
         return innerPanel;
     }
 
+    @Override
     protected void doOKAction() {
         registerEntry(RECENTS_KEY, targetPackageField.getText());
         Module module = psiHelper.findModuleForPsiClass(sourceClass, project);
         if (module == null) {
             throw new IllegalStateException("Cannot find module for class " + sourceClass.getName());
         }
+        try {
+            checkIfSourceClassHasZeroArgsConstructorWhenUsingSingleField();
+            checkIfClassCanBeCreated(module);
+            callSuper();
+        } catch (IncorrectOperationException e) {
+            guiHelper.showMessageDialog(project, e.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        }
+    }
+
+    void checkIfSourceClassHasZeroArgsConstructorWhenUsingSingleField() {
+        if (useSingleField()) {
+            PsiMethod[] constructors = sourceClass.getConstructors();
+            if(constructors.length == 0){
+                return;
+            }
+            for (PsiMethod constructor : constructors) {
+                if (constructor.getParameterList().getParametersCount() == 0) {
+                    return;
+                }
+            }
+            throw new IncorrectOperationException(String.format("%s must define a default constructor", sourceClass.getName()));
+        }
+    }
+
+    void checkIfClassCanBeCreated(Module module) {
         if (!isInnerBuilder()) {
-            SelectDirectory selectDirectory = new SelectDirectory(this, psiHelper, guiHelper, project, module, getPackageName(), getClassName());
+            SelectDirectory selectDirectory = new SelectDirectory(this, psiHelper, module, getPackageName(), getClassName(), existingBuilder);
             executeCommand(selectDirectory);
         }
-        callSuper();
     }
 
     void registerEntry(String key, String entry) {
@@ -433,6 +493,7 @@ public class CreateBuilderDialog extends DialogWrapper {
         return (name != null) ? name.trim() : "";
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
         return targetClassNameField;
     }
@@ -451,6 +512,10 @@ public class CreateBuilderDialog extends DialogWrapper {
 
     public boolean hasButMethod() {
         return butMethod.isSelected();
+    }
+
+    public boolean useSingleField() {
+        return useSingleField.isSelected();
     }
 
     public boolean hasFromMethod() {

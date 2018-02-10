@@ -10,15 +10,14 @@ import pl.mjedynak.idea.plugins.builder.psi.PsiHelper;
 
 public class CreateBuilderDialogFactory {
 
-    static final String BUILDER_SUFFIX = "Builder";
-    static final String METHOD_PREFIX = "with";
-
+    private static final String BUILDER_SUFFIX = "Builder";
+    private static final String METHOD_PREFIX = "with";
     private static final String DIALOG_NAME = "CreateBuilder";
+
     private PsiHelper psiHelper;
     private ReferenceEditorComboWithBrowseButtonFactory referenceEditorComboWithBrowseButtonFactory;
     private GuiHelper guiHelper;
     private DialogConfig dialogConfig;
-
 
     public CreateBuilderDialogFactory(PsiHelper psiHelper, ReferenceEditorComboWithBrowseButtonFactory referenceEditorComboWithBrowseButtonFactory, GuiHelper guiHelper) {
         this.psiHelper = psiHelper;
@@ -27,12 +26,16 @@ public class CreateBuilderDialogFactory {
         this.dialogConfig = DialogConfig.getInstance();
     }
 
-    public CreateBuilderDialog createBuilderDialog(PsiClass sourceClass, Project project, PsiPackage srcPackage) {
-        return new CreateBuilderDialog(project, DIALOG_NAME, sourceClass, sourceClass.getName() + BUILDER_SUFFIX, METHOD_PREFIX, srcPackage, psiHelper, guiHelper,
-                referenceEditorComboWithBrowseButtonFactory, dialogConfig);
+
+    public CreateBuilderDialog createBuilderDialog(PsiClass sourceClass, Project project, PsiPackage srcPackage, PsiClass existingBuilder) {
+        return new CreateBuilderDialog(project, DIALOG_NAME, sourceClass,
+                sourceClass.getName() + BUILDER_SUFFIX, METHOD_PREFIX,
+                srcPackage, psiHelper, guiHelper,
+                referenceEditorComboWithBrowseButtonFactory, existingBuilder, dialogConfig);
     }
 
     public DialogConfig getDialogConfig() {
         return dialogConfig;
     }
+
 }

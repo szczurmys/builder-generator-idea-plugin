@@ -23,10 +23,12 @@ public class BuilderContext {
     private final boolean createGetter;
     private final boolean createToBuilder;
 
+    private final boolean useSingleField;
 
     public BuilderContext(Project project, PsiFieldsForBuilder psiFieldsForBuilder,
                           PsiDirectory targetDirectory, String className, PsiClass psiClassFromEditor,
-                          String methodPrefix, boolean isInner, boolean hasButMethod, boolean hasFromMethod,
+                          String methodPrefix, boolean isInner, boolean hasButMethod, boolean useSingleField,
+                          boolean hasFromMethod,
                           boolean hasBuilderMethodInSourceClass, boolean createPrivateConstructor, boolean createGetter,
                           boolean createToBuilder) {
         this.project = project;
@@ -42,6 +44,7 @@ public class BuilderContext {
         this.createPrivateConstructor = createPrivateConstructor;
         this.createGetter = createGetter;
         this.createToBuilder = createToBuilder;
+        this.useSingleField = useSingleField;
     }
 
     public Project getProject() {
@@ -96,10 +99,14 @@ public class BuilderContext {
         return createToBuilder;
     }
 
+    public boolean useSingleField() {
+        return useSingleField;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hashCode(project, psiFieldsForBuilder, targetDirectory, className, psiClassFromEditor, methodPrefix,
-                createPrivateConstructor, createGetter, createToBuilder);
+                createPrivateConstructor, createGetter, createToBuilder, useSingleField);
     }
 
     @Override
@@ -119,7 +126,8 @@ public class BuilderContext {
                 && Objects.equal(this.methodPrefix, other.methodPrefix)
                 && Objects.equal(this.createPrivateConstructor, other.createPrivateConstructor)
                 && Objects.equal(this.createGetter, other.createGetter)
-                && Objects.equal(this.createToBuilder, other.createToBuilder);
+                && Objects.equal(this.createToBuilder, other.createToBuilder)
+                && Objects.equal(this.useSingleField, other.useSingleField);
     }
 
     @Override
@@ -138,6 +146,7 @@ public class BuilderContext {
                 .add("createPrivateConstructor", createPrivateConstructor)
                 .add("createGetter", createGetter)
                 .add("createToBuilder", createToBuilder)
+                .add("useSingleField", useSingleField)
                 .toString();
     }
 }
