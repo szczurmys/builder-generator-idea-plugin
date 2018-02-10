@@ -1,9 +1,6 @@
 package pl.mjedynak.idea.plugins.builder.psi;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import org.apache.commons.lang.StringUtils;
 import pl.mjedynak.idea.plugins.builder.settings.CodeStyleSettings;
 
@@ -37,18 +34,28 @@ public class ButMethodCreator {
         if (isInitializingMethod(parameterList)) {
             text.append(method.getName()).append("().");
         } else {
-            String parameterName = parameterList.getParameters()[0].getName();
+            PsiParameter psiParameter = parameterList.getParameters()[0];
+            PsiType type = psiParameter.getType();
+
+            String parameterName = psiParameter.getName();
             String parameterNamePrefix = codeStyleSettings.getParameterNamePrefix();
             String parameterNameWithoutPrefix = parameterName.replaceFirst(parameterNamePrefix, "");
             String fieldNamePrefix = codeStyleSettings.getFieldNamePrefix();
             text.append(method.getName()).append("(");
             if (useSingleField) {
-                text.append(srcClassFieldName).append(".get").append(StringUtils.capitalize(parameterNameWithoutPrefix)).append("()");
+                text.append(srcClassFieldName).append(".").append(getGetterPrefix(type)).append(StringUtils.capitalize(parameterNameWithoutPrefix)).append("()");
             } else {
                 text.append(fieldNamePrefix).append(parameterNameWithoutPrefix);
             }
             text.append(").");
         }
+    }
+
+    private String getGetterPrefix(PsiType type) {
+        if (PsiType.BOOLEAN.equals(type)) {
+            return "is";
+        }
+        return "get";
     }
 
     private boolean isInitializingMethod(PsiParameterList parameterList) {
