@@ -21,7 +21,8 @@ public class ButMethodCreator {
         StringBuilder text = new StringBuilder("public " + builderClassName + " but() { return builder().");
         for (PsiMethod method : methods) {
             PsiParameterList parameterList = method.getParameterList();
-            if (methodIsNotConstructor(builderClassName, method)) {
+            if (methodIsNotConstructor(builderClassName, method) &&
+                    methodIsNotStaticBuilderMethod(method)) {
                 appendMethod(text, method, parameterList, srcClassFieldName, useSingleField);
             }
         }
@@ -68,6 +69,12 @@ public class ButMethodCreator {
 
     private boolean methodIsNotConstructor(String builderClassName, PsiMethod method) {
         return !method.getName().equals(builderClassName);
+    }
+
+    private boolean methodIsNotStaticBuilderMethod(PsiMethod method) {
+        return !("builder".equals(method.getName())
+                && method.getModifierList().hasExplicitModifier(BuilderPsiClassBuilder.STATIC_MODIFIER)
+                && method.getParameterList().getParametersCount() == 0);
     }
 
     public PsiElementFactory getElementFactory() {

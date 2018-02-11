@@ -125,7 +125,7 @@ public class DialogConfig  implements PersistentStateComponent<DialogConfig> {
     }
 
     public Boolean getUseSingleField() {
-        return getValueOrFalse(createToBuilder);
+        return getValueOrFalse(useSingleField);
     }
 
     public void setUseSingleField(Boolean useSingleField) {

@@ -5,6 +5,8 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
@@ -57,6 +59,12 @@ public class BuilderPsiClassBuilder {
         builderClass = javaDirectoryService.createClass(context.getTargetDirectory(), builderClassName);
         PsiModifierList modifierList = builderClass.getModifierList();
         modifierList.setModifierProperty(FINAL_MODIFIER, true);
+
+        PsiFile srcFile = srcClass.getContainingFile();
+        if (srcFile instanceof PsiJavaFile) {
+            ((PsiJavaFile) srcFile).importClass(builderClass);
+        }
+
         return this;
     }
 
