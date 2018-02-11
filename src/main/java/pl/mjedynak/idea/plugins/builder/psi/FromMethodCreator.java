@@ -6,6 +6,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
 
@@ -18,20 +19,34 @@ public class FromMethodCreator {
         this.elementFactory = elementFactory;
     }
 
-    public PsiMethod fromMethod(String builderClassName, List<PsiField> allSelectedPsiFields, PsiClass srcClass, boolean innerBuilder) {
+    public PsiMethod fromMethod(String builderClassName, List<PsiField> allSelectedPsiFields, PsiClass srcClass,
+                                boolean innerBuilder, boolean useSingleField, String srcClassFieldName) {
         StringBuilder text = new StringBuilder("public " + builderClassName + " from(" + srcClass.getQualifiedName() + " " + FROM_PARAMETER_NAME + ") { ");
         for (PsiField field : allSelectedPsiFields) {
-                appendField(text, field, srcClass, innerBuilder);
+                appendField(text, field, srcClass, innerBuilder, useSingleField, srcClassFieldName);
         }
         text.append("return this;}");
         return elementFactory.createMethodFromText(text.toString(), srcClass);
     }
 
-    private void appendField(StringBuilder text, PsiField field, PsiClass srcClass, boolean innerBuilder) {
+    private void appendField(StringBuilder text, PsiField field, PsiClass srcClass,
+                             boolean innerBuilder, boolean useSingleField, String srcClassFieldName) {
 
-        text.append("this.").append(field.getName()).append(" = ").append(FROM_PARAMETER_NAME).append(".")
-                .append(getFieldValue(field, srcClass, innerBuilder))
-                .append(";");
+        if(useSingleField) {
+            text.append("this.").append(srcClassFieldName)
+                    .append(".")
+                    .append("set")
+                    .append(StringUtils.capitalize(field.getName()))
+                    .append("(")
+                    .append(FROM_PARAMETER_NAME).append(".").append(getFieldValue(field, srcClass, innerBuilder))
+                    .append(");");
+        } else {
+            text.append("this.").append(field.getName()).append(" = ").append(FROM_PARAMETER_NAME).append(".")
+                    .append(getFieldValue(field, srcClass, innerBuilder))
+                    .append(";");
+        }
+
+
     }
 
     private String getFieldValue(PsiField field, PsiClass srcClass, boolean innerBuilder) {

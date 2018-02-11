@@ -165,7 +165,8 @@ public class BuilderPsiClassBuilder {
     }
 
     public BuilderPsiClassBuilder withFromMethod(boolean innerBuilder) {
-        PsiMethod method = fromMethodCreator.fromMethod(builderClassName, allSelectedPsiFields, srcClass, innerBuilder);
+        PsiMethod method = fromMethodCreator.fromMethod(builderClassName, allSelectedPsiFields, srcClass,
+                innerBuilder, useSingleField, srcClassFieldName);
         builderClass.add(method);
         return this;
     }
