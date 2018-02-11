@@ -1,10 +1,6 @@
 package pl.mjedynak.idea.plugins.builder.psi;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +26,7 @@ public class ButMethodCreatorTest {
     @Mock private PsiMethod method2;
     @Mock private PsiMethod method3;
     @Mock private PsiMethod createdMethod;
+    @Mock private PsiModifierList modifierList1;
     @Mock private PsiParameterList parameterList1;
     @Mock private PsiParameterList parameterList2;
     @Mock private PsiParameter parameter;
@@ -46,7 +43,9 @@ public class ButMethodCreatorTest {
     private void initOtherCommonMocks() {
         given(builderClass.getMethods()).willReturn((PsiMethod[]) asList(method1, method2, method3).toArray());
         given(method1.getName()).willReturn("Builder");
-        given(method2.getName()).willReturn("aBuilder");
+        given(method2.getName()).willReturn("builder");
+        given(method2.getModifierList()).willReturn(modifierList1);
+        given(modifierList1.hasExplicitModifier("static")).willReturn(true);
         given(method2.getParameterList()).willReturn(parameterList1);
         given(parameterList1.getParametersCount()).willReturn(0);
         given(method3.getName()).willReturn("withAge");
@@ -61,7 +60,7 @@ public class ButMethodCreatorTest {
     public void shouldCreateButMethod() {
         // given
         initOtherCommonMocks();
-        given(psiElementFactory.createMethodFromText("public Builder but() { return aBuilder().withAge(m_age); }", srcClass)).willReturn(createdMethod);
+        given(psiElementFactory.createMethodFromText("public Builder but() { return builder().withAge(m_age); }", srcClass)).willReturn(createdMethod);
 
         // when
         PsiMethod result = butMethodCreator.butMethod("Builder", builderClass, srcClass, srcClassFieldName, false);
@@ -74,7 +73,7 @@ public class ButMethodCreatorTest {
     public void shouldCreateButMethodForSingleField() {
         // given
         initOtherCommonMocks();
-        given(psiElementFactory.createMethodFromText("public Builder but() { return aBuilder().withAge(className.getAge()); }", srcClass)).willReturn(createdMethod);
+        given(psiElementFactory.createMethodFromText("public Builder but() { return builder().withAge(className.getAge()); }", srcClass)).willReturn(createdMethod);
 
         // when
         PsiMethod result = butMethodCreator.butMethod("Builder", builderClass, srcClass, srcClassFieldName, true);

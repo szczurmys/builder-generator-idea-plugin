@@ -142,6 +142,7 @@ public class DisplayChoosersTest {
         boolean useSingleField = true;
         given(createBuilderDialogFactory.createBuilderDialog(psiClassFromEditor, project, psiPackage, existingBuilder)).willReturn(createBuilderDialog);
         given(createBuilderDialog.isInnerBuilder()).willReturn(isInner);
+        given(createBuilderDialog.useSingleField()).willReturn(useSingleField);
         given(createBuilderDialog.hasButMethod()).willReturn(hasButMethod);
         given(createBuilderDialog.hasFromMethod()).willReturn(hasFromMethod);
         given(createBuilderDialog.isCreatePrivateConstructor()).willReturn(createPrivateConstructor);
